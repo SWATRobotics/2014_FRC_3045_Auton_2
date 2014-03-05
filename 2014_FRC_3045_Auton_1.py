@@ -223,31 +223,57 @@ if __name__ == '__main__':
                     elif target.getArea() > possibleVertTarget1.getArea() :
                         possibleVertTarget2 = target
 
+        vt1loc = (50,440)
+        #vtrloc = (580,440)
+        #cv2.putText(img,"Hello World!!!", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 2, 255)
+        #img, text, textOrg, fontFace, fontScale, thickness, baseline?
+        #cv2.putText
+        #cv2.putText(img, "Hi again", vtlloc, cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=2)
+        #lineType= cv2.CV_AA
+
         if debugMode:
             if possibleHotArea > 0 :
                 drawRect(img, possibleHotTarget)
                 drawXonTarget(img, possibleHotTarget)
                 viewAngle = computeAngle(horizTarget.height, possibleHotTarget.height, 228)
                 distanceHot = computeDistance(horizTarget.height, possibleHotTarget.height)
+
                 #print "Distance: ", round(distanceHot), ", Hot Target", viewAngle, viewAngleVert, ", width: ", possibleHotTarget.width, ", height", possibleHotTarget.height
                 print "Distance: ", round(distanceHot / 12), ", Hot Target", viewAngle, viewAngleVert, ", width: ", \
                     possibleHotTarget.width, ", height", possibleHotTarget.height
 
         if debugMode:
+            lString = "L:"
+            rString = "R:"
+            v1DistStr = ""
+            v2DistStr = ""
             if possibleVertTarget1.getArea() > 0 :
                 drawRect(img, possibleVertTarget1)
                 drawXonTarget(img, possibleVertTarget1)
                 viewAngle = computeAngle(vertTarget.height, possibleVertTarget1.height, 228)
                 distanceVert1 = computeDistance(vertTarget.height, possibleVertTarget1.height)
-                print "Distance: ", round(distanceVert1 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
-                    possibleVertTarget1.width, ", height", possibleVertTarget1.height
+                v1DistStr = str(round(distanceVert1/12))
+                #print "Distance: ", round(distanceVert1 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
+                #    possibleVertTarget1.width, ", height", possibleVertTarget1.height
             if possibleVertTarget2.getArea() > 0 :
                 drawRect(img, possibleVertTarget2)
                 drawXonTarget(img, possibleVertTarget2)
                 viewAngle = computeAngle(vertTarget.height, possibleVertTarget2.height, 228)
                 distanceVert2 = computeDistance(vertTarget.height, possibleVertTarget2.height)
-                print "Distance: ", round(distanceVert2 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
-                    possibleVertTarget2.width, ", height", possibleVertTarget2.height
+                v2DistStr = str(round(distanceVert2/12))
+                #print "Distance: ", round(distanceVert2 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
+                #    possibleVertTarget2.width, ", height", possibleVertTarget2.height
+
+            if (possibleVertTarget1.getArea()>0) and (possibleVertTarget1.getArea()>0) :
+                if (possibleVertTarget1.x+(possibleVertTarget1.width)/2) > (possibleVertTarget2.x+(possibleVertTarget2.width)/2) :
+                    tmpStr = v2DistStr
+                    v2DistStr = v1DistStr
+                    v2DistStr = tmpStr
+
+            lString = lString + v1DistStr
+            rString = rString + v2DistStr
+            cv2.putText(img, lString, (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=2)
+            cv2.putText(img, rString, (510, 440), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=2)
 
         if debugMode:
             cv2.imshow("color", img)
