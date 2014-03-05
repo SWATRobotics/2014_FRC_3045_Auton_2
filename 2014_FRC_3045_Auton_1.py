@@ -47,11 +47,25 @@ def computeAngle(realHeight, targetHeight, distance):
 
 def drawRect(img, rect):
     #177
-    cv2.rectangle(img, (int(rect.x), int(rect.y)), (int(rect.x + rect.width), int(rect.y + rect.height)), 255, 2)
+    blueColor = (255,0,0)
+    cv2.rectangle(img, (int(rect.x), int(rect.y)), (int(rect.x + rect.width), int(rect.y + rect.height)), blueColor, 2)
 
-def drawTargetX(img, rect):
-    #redColor = np.array([200, 0, 0], np.uint8)
-    cv2.circle(img, ( int((rect.x+(rect.width/2))), int(rect.y+(rect.height/2)) ), 2, (0,200,0), 2)
+def drawXonTarget(img, rect):
+    extraLength = 10
+    redColor = (0,0,200)
+    targetX  = int((rect.x+(rect.width/2)))
+    targetY  = int((rect.y+(rect.height/2)))
+    cv2.circle(img, (targetX, targetY), 2, redColor, 2)
+    vlLeft = targetX
+    vlBottom = targetY - (rect.height/2) - extraLength
+    vlWidth = 0
+    vlHeight = rect.height + 2 * extraLength
+    cv2.rectangle(img, (vlLeft, vlBottom), (vlLeft+vlWidth, vlBottom+vlHeight), redColor, 1)
+    hlLeft = targetX - (rect.width/2) - extraLength
+    hlBottom = targetY
+    hlWidth = rect.width + 2 * extraLength
+    hlHeight = 0
+    cv2.rectangle(img, (hlLeft, hlBottom), (hlLeft+hlWidth, hlBottom+hlHeight), redColor, 1)
 
 def round(value):
     return math.floor((value * 100) + 0.5) / 100
@@ -85,7 +99,7 @@ if __name__ == '__main__':
     #camera = cv2.VideoCapture(1)
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.cgi?resolution=640x480.mjpg")
-    camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
+    #camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
     camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/axis-cgi/mjpg/video.cgi?resolution=640x480")
     foundHotTarget = False
@@ -212,7 +226,7 @@ if __name__ == '__main__':
         if debugMode:
             if possibleHotArea > 0 :
                 drawRect(img, possibleHotTarget)
-                drawTargetX(img, possibleHotTarget)
+                drawXonTarget(img, possibleHotTarget)
                 viewAngle = computeAngle(horizTarget.height, possibleHotTarget.height, 228)
                 distanceHot = computeDistance(horizTarget.height, possibleHotTarget.height)
                 #print "Distance: ", round(distanceHot), ", Hot Target", viewAngle, viewAngleVert, ", width: ", possibleHotTarget.width, ", height", possibleHotTarget.height
@@ -222,14 +236,14 @@ if __name__ == '__main__':
         if debugMode:
             if possibleVertTarget1.getArea() > 0 :
                 drawRect(img, possibleVertTarget1)
-                drawTargetX(img, possibleVertTarget1)
+                drawXonTarget(img, possibleVertTarget1)
                 viewAngle = computeAngle(vertTarget.height, possibleVertTarget1.height, 228)
                 distanceVert1 = computeDistance(vertTarget.height, possibleVertTarget1.height)
                 print "Distance: ", round(distanceVert1 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
                     possibleVertTarget1.width, ", height", possibleVertTarget1.height
             if possibleVertTarget2.getArea() > 0 :
                 drawRect(img, possibleVertTarget2)
-                drawTargetX(img, possibleVertTarget2)
+                drawXonTarget(img, possibleVertTarget2)
                 viewAngle = computeAngle(vertTarget.height, possibleVertTarget2.height, 228)
                 distanceVert2 = computeDistance(vertTarget.height, possibleVertTarget2.height)
                 print "Distance: ", round(distanceVert2 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
