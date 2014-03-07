@@ -27,6 +27,7 @@ import math
 import numpy as np
 from rectangle import Rectangle
 from PIL import Image
+from pynetworktables import *
 
 import cPickle
 
@@ -95,12 +96,18 @@ def better_way(img_in):
 
 if __name__ == '__main__':
 
+    NetworkTable.SetIPAddress("127.0.0.1")
+    NetworkTable.SetClientMode()
+    NetworkTable.Initialize()
+    table = NetworkTable.GetTable("3045RobotVision")
+    table.PutNumber('test', 3.14159)
+
     #VideoCapture * cap = new  VideoCapture("http://root:pass@192.168.0.90/axis-cgi/mjpg/video.cgi?resolution=640x480.mjpg");
     #camera = cv2.VideoCapture(1)
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.cgi?resolution=640x480.mjpg")
     #camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
-    camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
+    #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/axis-cgi/mjpg/video.cgi?resolution=640x480")
     foundHotTarget = False
     foundVertTarget = False
@@ -119,8 +126,10 @@ if __name__ == '__main__':
     print "vision name", __name__
 
     while True :
-        ret, img = camera.read() # img.shape 640x480 image
+        #ret, img = camera.read() # img.shape 640x480 image
         #print "ret: " + str(ret) + "\n"
+        ret = True
+        img = cv2.imread("c:\sampleimages/targetsnap.tiff")
         if not ret : print "oops!\n"
         #cv2.imshow('input',img)
 
@@ -241,6 +250,10 @@ if __name__ == '__main__':
                 #print "Distance: ", round(distanceHot), ", Hot Target", viewAngle, viewAngleVert, ", width: ", possibleHotTarget.width, ", height", possibleHotTarget.height
                 print "Distance: ", round(distanceHot / 12), ", Hot Target", viewAngle, viewAngleVert, ", width: ", \
                     possibleHotTarget.width, ", height", possibleHotTarget.height
+        haveHotTarget = False
+        if possibleHotArea > 0 :
+            haveHotTarget = True
+        table.PutBoolean('hotTarget', haveHotTarget)
 
         if debugMode:
             lString = "L:"
@@ -272,8 +285,8 @@ if __name__ == '__main__':
 
             lString = lString + v1DistStr
             rString = rString + v2DistStr
-            cv2.putText(img, lString, (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=2)
-            cv2.putText(img, rString, (510, 440), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), thickness=2)
+            cv2.putText(img, lString, (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), thickness=2)
+            cv2.putText(img, rString, (510, 440), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), thickness=2)
 
         if debugMode:
             cv2.imshow("color", img)
