@@ -71,14 +71,68 @@ def drawXonTarget(img, rect):
 def round(value):
     return math.floor((value * 100) + 0.5) / 100
 
+# based on code samples at http://stackoverflow.com/questions/4890373/detecting-thresholds-in-hsv-color-space-from-rgb-using-python-pil
+def rgb_to_hsl_hsv(a, isHSV=True):
+    """
+    Converts RGB image data to HSV or HSL.
+    :param a: 3D array. Retval of np.asarray(Image.open(...), int)
+    :param isHSV: True = HSV, False = HSL
+    :return: H,S,L or H,S,V array
+    """
+    R, G, B = a.T
+
+    m = np.min(a, 2).T
+    M = np.max(a, 2).T
+
+    C = M - m #chroma
+    Cmsk = C != 0
+
+    # Hue
+    H = np.zeros(R.shape, int)
+    mask = (M == R) & Cmsk
+    H[mask] = np.mod(60 * (G[mask] - B[mask]) / C[mask], 360)
+    mask = (M == G) & Cmsk
+    H[mask] = (60 * (B[mask] - R[mask]) / C[mask] + 120)
+    mask = (M == B) & Cmsk
+    H[mask] = (60 * (R[mask] - G[mask]) / C[mask] + 240)
+    H *= 255
+    #cv2.imshow('hue',H.swapaxes(0, 1))
+    H /= 360 # if you prefer, leave as 0-360, but don't convert to uint8
+
+
+    # Saturation
+    S = np.zeros(R.shape, int)
+
+    if isHSV:
+        # This code is for HSV:
+        # Value
+        V = M
+
+        # Saturation
+        S[Cmsk] = ((255 * C[Cmsk]) / V[Cmsk])
+        #cv2.imshow('sat',S.swapaxes(0, 1))
+        #cv2.imshow('val',V.swapaxes(0, 1))
+        # H, S, and V are now defined as integers 0-255
+        return H.swapaxes(0, 1), S.swapaxes(0, 1), V.swapaxes(0, 1)
+    else:
+        # This code is for HSL:
+        # Value
+        L = 0.5 * (M + m)
+
+        # Saturation
+        S[Cmsk] = ((C[Cmsk]) / (1 - np.absolute(2 * L[Cmsk]/255.0 - 1)))
+        # H, S, and L are now defined as integers 0-255
+        return H.swapaxes(0, 1), S.swapaxes(0, 1), L.swapaxes(0, 1)
+
+
 # from http://stackoverflow.com/questions/7722519/fast-rgb-thresholding-in-python-possibly-some-smart-opencv-code
 def better_way(img_in):
     #img = img_in.convert('RGB')
     img = cv2.cvtColor(img_in, cv2.COLOR_BGR2RGB)
     #img = Image.open("rainbow.jpg").convert('RGB')
     arr = np.array(np.asarray(img))
-
-    R = [(128,255),(200,255),(220,255)]
+    #177 248 255
+    R = [(170,190),(64,255),(250,256)]
     red_range = np.logical_and(R[0][0] < arr[:,:,0], arr[:,:,0] < R[0][1])
     green_range = np.logical_and(R[1][0] < arr[:,:,0], arr[:,:,0] < R[1][1])
     blue_range = np.logical_and(R[2][0] < arr[:,:,0], arr[:,:,0] < R[2][1])
@@ -108,6 +162,7 @@ if __name__ == '__main__':
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.cgi?resolution=640x480.mjpg")
     #camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
+    #camera = cv2.VideoCapture("http://10.30.45.11/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/axis-cgi/mjpg/video.cgi?resolution=640x480")
     foundHotTarget = False
     foundVertTarget = False
@@ -129,18 +184,24 @@ if __name__ == '__main__':
         #ret, img = camera.read() # img.shape 640x480 image
         #print "ret: " + str(ret) + "\n"
         ret = True
-        img = cv2.imread("c:\sampleimages/targetsnap.tiff")
+        img = cv2.imread("c:\Untitled.tiff")
         if not ret : print "oops!\n"
         #cv2.imshow('input',img)
 
         # Convert to hsv img
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        #hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        h, s, v = rgb_to_hsl_hsv(img, True)
+        #cv2.imshow("v", v)
+        thresh = 255
+        im_bw = cv2.threshold(v, 240, 255, cv2.THRESH_BINARY)[1]
+        cv2.imshow("im_bw",im_bw)
 
         #
-        rg = better_way(img)
-        #cv2.imshow('huh', rg)
+        if False :
+            rg = better_way(img)
+            cv2.imshow('huh', rg)
         #rg1 = cv2.cvtColor(rg, cv2.COLOR_BGR2HSV)
-        hsv = cv2.cvtColor(rg, cv2.COLOR_BGR2HSV)
+        #hsv = cv2.cvtColor(rg, cv2.COLOR_BGR2HSV)
 
         #  Keep only green objects
         # higher s = less white, higher v = less black
@@ -148,28 +209,30 @@ if __name__ == '__main__':
         #lowerGreen = np.array([70, 70, 180])
         #upperGreen = np.array([110, 130,255])
         if False :
-            lg_h, lg_s, lg_v = 0, 0, 90
-            ug_h, ug_s, ug_v = 255, 255, 110
+            lg_h, lg_s, lg_v = 0, 0, 254
+            ug_h, ug_s, ug_v = 255, 255, 255
             #lg_h, lg_s, lg_v = 100, 6, 67
             #ug_h, ug_s, ug_v = 158, 98, 87
             lowerGreen = np.array([lg_h, lg_s, lg_v])
             upperGreen = np.array([ug_h, ug_s, ug_v])
             filteredGreen = cv2.inRange(hsv, lowerGreen, upperGreen)
-            #cv2.imshow('fgreen',filteredGreen)
+            cv2.imshow('fgreen',filteredGreen)
 
-        filteredGreen = rg
-        #cv2.cvtColor(rg, cv2.COLOR_RGB2GRAY, filteredGreen, 1)
-        #cv2.cvtColor(filteredGreen, cv2.COLOR_GRAY2RGBA, filteredGreen, 1)
-        #rg.convertTo(filteredGreen, CV_8UC1)
-        #try as hard as heck to convert to happy format for findContours...
-        min_t = np.array((199, 199, 199))
-        max_t = np.array((201, 201, 201))
-        filteredGreen = cv2.inRange(rg, min_t, max_t)
+        if False :
+            filteredGreen = rg
+            #cv2.cvtColor(rg, cv2.COLOR_RGB2GRAY, filteredGreen, 1)
+            #cv2.cvtColor(filteredGreen, cv2.COLOR_GRAY2RGBA, filteredGreen, 1)
+            #rg.convertTo(filteredGreen, CV_8UC1)
+            #try as hard as heck to convert to happy format for findContours...
+            min_t = np.array((199, 199, 199))
+            max_t = np.array((201, 201, 201))
+            filteredGreen = cv2.inRange(rg, min_t, max_t)
+        filteredGreen = im_bw
         #cv2.imshow('bigfilter',filteredGreen)
 
         # Filter out small objects
         filteredGreen = cv2.morphologyEx(filteredGreen, cv2.MORPH_OPEN, np.ones((3, 3)))
-        #cv2.imshow('fgreens',filteredGreen)
+        cv2.imshow('fgreens',filteredGreen)
 
         # Find all contours, counter is vector of points that are connected to make up a shape
         contours, hierarchy = cv2.findContours(filteredGreen, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -207,7 +270,7 @@ if __name__ == '__main__':
                 hotTargetRatio = 23.5 / 4
                 #hotTargetRatio = 5.3 # use this until calibrated
                 hotTargetMargin = 0.25 # percent error margin
-                if (target.width>target.height) and (target.height * (hotTargetRatio)*(1+hotTargetMargin)) >= target.width >= (target.height * ((hotTargetRatio)*(1-hotTargetMargin))):
+                if (target.width>target.height) and  (target.height * (hotTargetRatio)*(1+hotTargetMargin)) >= target.width >= (target.height * ((hotTargetRatio)*(1-hotTargetMargin))):
                     foundHotTarget = True
                     if target.getArea() > possibleHotArea :
                         possibleHotTarget = target
@@ -216,8 +279,8 @@ if __name__ == '__main__':
 
                 # MPH improvements: - height / width (32/4) +-15% then possibly the hot target
                 # If the height of the target is greater than its width its probably a vert target
-                vertTargetRatio = 32/4
-                vertTargetMargin = 0.15
+                vertTargetRatio = 32 / 4
+                vertTargetMargin = 0.30
                 if (target.height>target.width) and (target.width * (vertTargetRatio)*(1+vertTargetMargin)) >= target.height >= (target.width * ((vertTargetRatio)*(1-vertTargetMargin))):
                     foundVertTarget = True
 
@@ -232,7 +295,7 @@ if __name__ == '__main__':
                     elif target.getArea() > possibleVertTarget1.getArea() :
                         possibleVertTarget2 = target
 
-        vt1loc = (50,440)
+        #vt1loc = (50,440)
         #vtrloc = (580,440)
         #cv2.putText(img,"Hello World!!!", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 2, 255)
         #img, text, textOrg, fontFace, fontScale, thickness, baseline?
@@ -265,7 +328,10 @@ if __name__ == '__main__':
                 drawXonTarget(img, possibleVertTarget1)
                 viewAngle = computeAngle(vertTarget.height, possibleVertTarget1.height, 228)
                 distanceVert1 = computeDistance(vertTarget.height, possibleVertTarget1.height)
-                v1DistStr = str(round(distanceVert1/12))
+                distanceVert1AsFeet = distanceVert1 / 12
+                #f(x)= 1.29x -0.09 - per Nathan
+                #distanceVert1AsFeet = (1.29 * distanceVert1AsFeet) - 0.09
+                v1DistStr = str(round(distanceVert1AsFeet))
                 #print "Distance: ", round(distanceVert1 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
                 #    possibleVertTarget1.width, ", height", possibleVertTarget1.height
             if possibleVertTarget2.getArea() > 0 :
@@ -273,6 +339,9 @@ if __name__ == '__main__':
                 drawXonTarget(img, possibleVertTarget2)
                 viewAngle = computeAngle(vertTarget.height, possibleVertTarget2.height, 228)
                 distanceVert2 = computeDistance(vertTarget.height, possibleVertTarget2.height)
+                distanceVert2AsFeet = distanceVert2 / 12
+                #f(x)= 1.29x -0.09 - per Nathan
+                #distanceVert2AsFeet = (1.29 * distanceVert2AsFeet) - 0.09
                 v2DistStr = str(round(distanceVert2/12))
                 #print "Distance: ", round(distanceVert2 / 12), ", Vert Target 1", viewAngle, viewAngleVert, ", width: ", \
                 #    possibleVertTarget2.width, ", height", possibleVertTarget2.height
