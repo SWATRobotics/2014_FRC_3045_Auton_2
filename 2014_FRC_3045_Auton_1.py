@@ -150,7 +150,8 @@ def better_way(img_in):
 
 if __name__ == '__main__':
 
-    NetworkTable.SetIPAddress("127.0.0.1")
+    #NetworkTable.SetIPAddress("127.0.0.1")
+    NetworkTable.SetIPAddress("10.30.45.2")
     NetworkTable.SetClientMode()
     NetworkTable.Initialize()
     table = NetworkTable.GetTable("3045RobotVision")
@@ -161,7 +162,7 @@ if __name__ == '__main__':
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.cgi?resolution=640x480.mjpg")
     #camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
-    #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
+    camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.30.45.11/mjpg/1/video.mjpg")
     #camera = cv2.VideoCapture("http://10.0.1.169/axis-cgi/mjpg/video.cgi?resolution=640x480")
     foundHotTarget = False
@@ -180,13 +181,17 @@ if __name__ == '__main__':
 
     print "vision name", __name__
 
-    while True :
-        #ret, img = camera.read() # img.shape 640x480 image
+def update(viewAngleHorz):
+    print "update()"
+
+#    while True :
+        ret, img = camera.read() # img.shape 640x480 image
         #print "ret: " + str(ret) + "\n"
-        ret = True
-        img = cv2.imread("c:\Untitled.tiff")
-        if not ret : print "oops!\n"
-        #cv2.imshow('input',img)
+        #ret = True
+        #img = cv2.imread("c:\Untitled.tiff")
+        #if not ret : print "oops!\n"
+        #elif
+        #    cv2.imshow('input',img)
 
         # Convert to hsv img
         #hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
