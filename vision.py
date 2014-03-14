@@ -172,6 +172,7 @@ if debugMode:
     cv2.namedWindow('color', cv2.WINDOW_NORMAL)
     #cv2.namedWindow('filtered', cv2.WINDOW_NORMAL)
 
+#insert a comment
 print "vision name", __name__
 
 def update(table, viewAngleHorz, deltaTime):
