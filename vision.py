@@ -28,6 +28,7 @@ import numpy as np
 from rectangle import Rectangle
 from PIL import Image
 from pynetworktables import *
+import arrow
 
 import cPickle
 
@@ -173,6 +174,7 @@ if debugMode:
     #cv2.namedWindow('filtered', cv2.WINDOW_NORMAL)
 
 #insert a comment
+#insert another comment
 print "vision name", __name__
 
 def update(table, viewAngleHorz, deltaTime):
@@ -360,6 +362,7 @@ def update(table, viewAngleHorz, deltaTime):
         cv2.putText(img, fpsString, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), thickness=2)
 
     if debugMode:
+        arrow.draw_arrow(img, (10, 20), (100, 150), (100, 0, 255), 20);
         cv2.imshow("color", img)
         cv2.waitKey(1)
         #cv2.imshow("filtered", filteredGreen)
