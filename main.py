@@ -19,14 +19,16 @@ if __name__ == '__main__':
 
     # Table name = team number, used for ip address
     tableName = "3045RobotVision"
-    NetworkTable.SetIPAddress("127.0.0.1")
-    #NetworkTable.SetIPAddress("10.30.45.2")
+    #NetworkTable.SetIPAddress("127.0.0.1")
+    NetworkTable.SetIPAddress("10.30.45.2")
     NetworkTable.SetClientMode()
     NetworkTable.Initialize()
     table = NetworkTable.GetTable(tableName)
-    table.PutNumber('test', 3.14159)
+    #table.PutNumber('test', 3.14159)
     #table = NetworkTableClient(tableName)
     #tableDirectory = '/' + tableName + '/'
+    tableDirectory = ""
+
 
     # Id's for reading data from networktable
     isGoalHotId = "isGoalHot"
@@ -39,17 +41,25 @@ if __name__ == '__main__':
 
     deltaTime = 0.9
 
+    frames = 0
+
     while True:
         #gyroAngle = table.getValue(tableDirectory + gyroAngleId)
         gyroAngle = 0
         start= time.time()
-        vision.update(table, gyroAngle, deltaTime)
+        theta, dist = vision.update(table, gyroAngle, deltaTime)
         end= time.time()
         deltaTime = (end - start)
         #print "delta : " + str(delta)
         #print "fps : " + str(1 / (delta))
-        #table.setValue(tableDirectory + goalDistanceId, vision.getDistace())
-        #table.setValue(tableDirectory + isGoalHotId, vision.getFoundHotTarget())
-        #table.setValue(tableDirectory + isGoalHorzId, vision.getFoundHorzTarget())
+        #table.PutNumber(tableDirectory + goalDistanceId, vision.getDistance())
+        #table.PutNumber(tableDirectory + isGoalHotId, vision.getFoundHotTarget())
+        table.PutNumber(tableDirectory + "deltaTime1", deltaTime)
+        table.PutNumber(tableDirectory + "frames", frames)
+        table.PutNumber(tableDirectory + "theta", theta)
+        table.PutNumber(tableDirectory + "dist", dist / 12.0)
+        table.PutNumber(tableDirectory + "throttle", vision.throttleValue(dist))
+         #table.PutNumber(tableDirectory + isGoalHorzId, vision.getFoundHorzTarget())
+        frames = frames + 1
 
         #time.sleep(1.0 / 4.0)

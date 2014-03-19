@@ -18,3 +18,7 @@ class Rectangle:
 
 	def getArea(self):
 		return self.width * self.height
+
+	def getCenter(self):
+		return (self.x+(self.width/2)), (self.y+(self.height/2))
+

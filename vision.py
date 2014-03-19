@@ -27,7 +27,7 @@ import math
 import numpy as np
 from rectangle import Rectangle
 from PIL import Image
-from pynetworktables import *
+#from pynetworktables import *
 import arrow
 
 import cPickle
@@ -35,8 +35,14 @@ import cPickle
 def getFoundHotTarget():
     return foundHotTarget
 
-def getFoundHorzTarget():
-    return foundHorzTarget
+#def getFoundHorzTarget():
+#    return foundHorzTarget
+
+def rHotTarget():
+    return possibleHotTarget
+
+def rVertTargets():
+    return possibleVertTarget1, possibleVertTarget2
 
 def getDistance():
     return distance
@@ -48,26 +54,24 @@ def computeAngle(realHeight, targetHeight, distance):
     return math.atan(((realHeight / targetHeight) * resHalfY) / distance) * 180.0 / 3.14159
 
 def drawRect(img, rect):
-    #177
-    blueColor = (255,0,0)
-    cv2.rectangle(img, (int(rect.x), int(rect.y)), (int(rect.x + rect.width), int(rect.y + rect.height)), blueColor, 2)
+    blueTargetColor = (255, 0, 0)
+    cv2.rectangle(img, (int(rect.x), int(rect.y)), (int(rect.x + rect.width), int(rect.y + rect.height)), blueTargetColor, 2)
 
 def drawXonTarget(img, rect):
     extraLength = 10
-    redColor = (0,0,200)
-    targetX  = int((rect.x+(rect.width/2)))
-    targetY  = int((rect.y+(rect.height/2)))
-    cv2.circle(img, (targetX, targetY), 2, redColor, 2)
+    redTargetColor = (0, 0, 200)
+    targetX, targetY = rect.getCenter()
+    cv2.circle(img, (targetX, targetY), 2, redTargetColor, 2)
     vlLeft = targetX
     vlBottom = targetY - (rect.height/2) - extraLength
     vlWidth = 0
     vlHeight = rect.height + 2 * extraLength
-    cv2.rectangle(img, (vlLeft, vlBottom), (vlLeft+vlWidth, vlBottom+vlHeight), redColor, 1)
+    cv2.rectangle(img, (vlLeft, vlBottom), (vlLeft+vlWidth, vlBottom+vlHeight), redTargetColor, 1)
     hlLeft = targetX - (rect.width/2) - extraLength
     hlBottom = targetY
     hlWidth = rect.width + 2 * extraLength
     hlHeight = 0
-    cv2.rectangle(img, (hlLeft, hlBottom), (hlLeft+hlWidth, hlBottom+hlHeight), redColor, 1)
+    cv2.rectangle(img, (hlLeft, hlBottom), (hlLeft+hlWidth, hlBottom+hlHeight), redTargetColor, 1)
 
 def round(value):
     return math.floor((value * 100) + 0.5) / 100
@@ -156,7 +160,7 @@ def better_way(img_in):
 #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
 #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.cgi?resolution=640x480.mjpg")
 #camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
-camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
+#camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
 #camera = cv2.VideoCapture("http://10.30.45.11/mjpg/1/video.mjpg")
 #camera = cv2.VideoCapture("http://10.0.1.169/axis-cgi/mjpg/video.cgi?resolution=640x480")
 foundHotTarget = False
@@ -167,6 +171,12 @@ distance = 0.0
 resHalfY = 240
 horizTarget = Rectangle(0.0, 0.0, 23.5, 4.0)
 vertTarget = Rectangle(0.0, 0.0, 4.0, 32.0)
+
+#define here so a function can return the current rectangle
+possibleHotTarget = Rectangle(0,0,0,0)
+possibleVertTarget1 = Rectangle(0,0,0,0)
+possibleVertTarget2 = Rectangle(0,0,0,0)
+
 debugMode = True
 
 if debugMode:
@@ -177,14 +187,30 @@ if debugMode:
 #insert another comment
 print "vision name", __name__
 
-def update(table, viewAngleHorz, deltaTime):
+def throttleValue(dist) :
+    targetDistance = 10
+    maxDistance = targetDistance + 2
+    minDistance = targetDistance - 2
+    result = 0
+    if (dist > targetDistance + 1) :
+        result = 0.5
+    if (dist > maxDistance) :
+        result = 1.0
+    if (dist < targetDistance - 1) :
+        result = 0.5
+    if (dist < minDistance) :
+        result = 1.0
+    return result
+
+def update(table, viewAngleHorz, deltaTime) :
+    theta, dist = 0.0, 0.0
     #print "update()"
 
 #    while True :
-    ret, img = camera.read() # img.shape 640x480 image
+    #ret, img = camera.read() # img.shape 640x480 image
     #print "ret: " + str(ret) + "\n"
-    #ret = True
-    #img = cv2.imread("c:\Untitled.tiff")
+    ret = True
+    img = cv2.imread("c:\Untitled.tiff")
     #if not ret : print "oops!\n"
     #elif
     #    cv2.imshow('input',img)
@@ -269,7 +295,6 @@ def update(table, viewAngleHorz, deltaTime):
             # MPH improvements: - width / height (23.5/4) +-15% then possibly the hot target
             #  If the width of the target is greater than its height then it's probably the hot target
             hotTargetRatio = 23.5 / 4
-            #hotTargetRatio = 5.3 # use this until calibrated
             hotTargetMargin = 0.25 # percent error margin
             if (target.width>target.height) and  (target.height * (hotTargetRatio)*(1+hotTargetMargin)) >= target.width >= (target.height * ((hotTargetRatio)*(1-hotTargetMargin))):
                 foundHotTarget = True
@@ -353,6 +378,8 @@ def update(table, viewAngleHorz, deltaTime):
                 v2DistStr = v1DistStr
                 v2DistStr = tmpStr
 
+        if (possibleVertTarget1.getArea()>0) :
+            dist = distanceVert1
         lString = lString + v1DistStr
         rString = rString + v2DistStr
         fpsString = "FPS: "
@@ -362,7 +389,10 @@ def update(table, viewAngleHorz, deltaTime):
         cv2.putText(img, fpsString, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), thickness=2)
 
     if debugMode:
-        arrow.draw_arrow(img, (10, 20), (100, 150), (100, 0, 255), 20);
+        arrow.draw_arrow(img, (320, 240), (100, 150), (100, 0, 255), 20);
+        throttleArrow = throttleValue(dist)
+        arrow.draw_arrow(img, (320, 430), (320, int(430 - (180*throttleArrow))), (200, 0, 255), 20);
+
         cv2.imshow("color", img)
         cv2.waitKey(1)
         #cv2.imshow("filtered", filteredGreen)
@@ -370,4 +400,6 @@ def update(table, viewAngleHorz, deltaTime):
 
     if cv2.waitKey(1) == 27:
         exit(0)
+
+    return theta, dist
 
