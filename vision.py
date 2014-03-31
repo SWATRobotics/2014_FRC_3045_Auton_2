@@ -48,7 +48,12 @@ def getDistance():
     return distance
 
 def computeDistance(realHeight, targetHeight):
-    return ((realHeight / targetHeight) * resHalfY) / math.tan(viewAngleVert * 3.14159 / 180.0)
+    # (y-5.3)/1.216=x
+    interim = ((realHeight / targetHeight) * resHalfY) / math.tan(viewAngleVert * 3.14159 / 180.0)
+    interim = (interim-5.3)/1.216
+    #return ((realHeight / targetHeight) * resHalfY) / math.tan(viewAngleVert * 3.14159 / 180.0)
+    return interim
+
 
 def computeAngle(realHeight, targetHeight, distance):
     return math.atan(((realHeight / targetHeight) * resHalfY) / distance) * 180.0 / 3.14159
@@ -161,7 +166,7 @@ def better_way(img_in):
 #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.cgi?resolution=640x480.mjpg")
 #camera = cv2.VideoCapture("http://10.30.45.120/mjpg/1/video.mjpg")
 #camera = cv2.VideoCapture("http://10.0.1.169/mjpg/1/video.mjpg")
-#camera = cv2.VideoCapture("http://10.30.45.11/mjpg/1/video.mjpg")
+camera = cv2.VideoCapture("http://10.30.45.11/mjpg/1/video.mjpg")
 #camera = cv2.VideoCapture("http://10.0.1.169/axis-cgi/mjpg/video.cgi?resolution=640x480")
 foundHotTarget = False
 foundVertTarget = False
@@ -181,6 +186,7 @@ debugMode = True
 
 if debugMode:
     cv2.namedWindow('color', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('color', 800, 600)
     #cv2.namedWindow('filtered', cv2.WINDOW_NORMAL)
 
 #insert a comment
@@ -188,18 +194,41 @@ if debugMode:
 print "vision name", __name__
 
 def throttleValue(dist) :
-    targetDistance = 10
-    maxDistance = targetDistance + 2
-    minDistance = targetDistance - 2
+    dist = dist / 12
+    # jesse's test distance
+    #dist = 9.0
+    #print "dist : " + str(dist)
+    targetDistance = 9
+    distanceThreshold = 2
+    maxDistance = targetDistance + distanceThreshold
+    minDistance = targetDistance - distanceThreshold
     result = 0
-    if (dist > targetDistance + 1) :
-        result = 0.5
-    if (dist > maxDistance) :
-        result = 1.0
-    if (dist < targetDistance - 1) :
-        result = 0.5
-    if (dist < minDistance) :
-        result = 1.0
+    if True :
+         if (dist > targetDistance + 1) :
+              result = 0.5
+         if (dist > maxDistance) :
+            result = 1.0
+         if (dist < targetDistance - 1) :
+            result = -0.5
+         if (dist < minDistance) :
+            result = -1.0
+         if (dist == 0) :
+            result = 0
+    else : # Jesse Low
+         if (dist > targetDistance + 9) and (dist < targetDistance + 11) :
+            result = 0
+         if (dist > targetDistance + 11) :
+            result = -1
+         if (dist > targetDistance -5+10) :
+            result = 1
+         if (dist > targetDistance +1.01) and (dist < targetDistance +4.99):
+            result = -0.5
+         if (dist > targetDistance -1.01) and (dist < targetDistance + 4.99):
+            result = 0.5
+
+    return result
+
+    print "result : " + str(result)
     return result
 
 def update(table, viewAngleHorz, deltaTime) :
@@ -207,10 +236,10 @@ def update(table, viewAngleHorz, deltaTime) :
     #print "update()"
 
 #    while True :
-    #ret, img = camera.read() # img.shape 640x480 image
+    ret, img = camera.read() # img.shape 640x480 image
     #print "ret: " + str(ret) + "\n"
-    ret = True
-    img = cv2.imread("c:\Untitled.tiff")
+    #ret = True
+    #img = cv2.imread("c:\Untitled.tiff")
     #if not ret : print "oops!\n"
     #elif
     #    cv2.imshow('input',img)
@@ -378,6 +407,7 @@ def update(table, viewAngleHorz, deltaTime) :
                 v2DistStr = v1DistStr
                 v2DistStr = tmpStr
 
+        dist = 0
         if (possibleVertTarget1.getArea()>0) :
             dist = distanceVert1
         lString = lString + v1DistStr
@@ -389,9 +419,11 @@ def update(table, viewAngleHorz, deltaTime) :
         cv2.putText(img, fpsString, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), thickness=2)
 
     if debugMode:
-        arrow.draw_arrow(img, (320, 240), (100, 150), (100, 0, 255), 20);
+        #arrow.draw_arrow(img, (320, 240), (100, 150), (100, 0, 255), 20);
+
         throttleArrow = throttleValue(dist)
-        arrow.draw_arrow(img, (320, 430), (320, int(430 - (180*throttleArrow))), (200, 0, 255), 20);
+        if throttleArrow != 0 :
+            arrow.draw_arrow(img, (320, 380), (320, int(380 - (50*throttleArrow))), (200, 0, 255), 20);
 
         cv2.imshow("color", img)
         cv2.waitKey(1)
