@@ -29,7 +29,6 @@ if __name__ == '__main__':
     #tableDirectory = '/' + tableName + '/'
     tableDirectory = ""
 
-
     # Id's for reading data from networktable
     isGoalHotId = "isGoalHot"
     isGoalHorzId = "isGoalHorz"
@@ -54,10 +53,10 @@ if __name__ == '__main__':
         #print "fps : " + str(1 / (delta))
         #table.PutNumber(tableDirectory + goalDistanceId, vision.getDistance())
         #table.PutNumber(tableDirectory + isGoalHotId, vision.getFoundHotTarget())
-        table.PutNumber(tableDirectory + "deltaTime1", deltaTime)
-        table.PutNumber(tableDirectory + "frames", frames)
+        #table.PutNumber(tableDirectory + "deltaTime1", deltaTime)
+        #table.PutNumber(tableDirectory + "frames", frames)
         table.PutNumber(tableDirectory + "theta", theta)
-        table.PutNumber(tableDirectory + "dist", dist / 12.0)
+        #table.PutNumber(tableDirectory + "dist", dist / 12.0)
         table.PutNumber(tableDirectory + "throttle", vision.throttleValue(dist))
          #table.PutNumber(tableDirectory + isGoalHorzId, vision.getFoundHorzTarget())
         frames = frames + 1
